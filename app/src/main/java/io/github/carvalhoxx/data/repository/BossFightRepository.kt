@@ -13,6 +13,10 @@ class BossFightRepository(private val dao: BossFightDao) {
 
     fun observeBossesByGame(gameId: Long): Flow<List<BossEntity>> = dao.observeBossesByGame(gameId)
 
+    fun observeAllBosses(): Flow<List<BossEntity>> = dao.observeAllBosses()
+
+    fun observeBossById(bossId: Long): Flow<BossEntity?> = dao.observeBossById(bossId)
+
     suspend fun createGame(name: String): Long {
         val trimmed = name.trim()
         if (trimmed.isEmpty()) return -1L

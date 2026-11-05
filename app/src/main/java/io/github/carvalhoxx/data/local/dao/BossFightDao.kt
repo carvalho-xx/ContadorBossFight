@@ -27,6 +27,12 @@ interface BossFightDao {
     @Query("SELECT * FROM bosses WHERE gameId = :gameId ORDER BY id ASC")
     fun observeBossesByGame(gameId: Long): Flow<List<BossEntity>>
 
+    @Query("SELECT * FROM bosses ORDER BY id ASC")
+    fun observeAllBosses(): Flow<List<BossEntity>>
+
+    @Query("SELECT * FROM bosses WHERE id = :bossId LIMIT 1")
+    fun observeBossById(bossId: Long): Flow<BossEntity?>
+
     @Query("SELECT * FROM bosses WHERE id = :bossId LIMIT 1")
     suspend fun getBossById(bossId: Long): BossEntity?
 
