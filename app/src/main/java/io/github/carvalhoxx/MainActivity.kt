@@ -8,7 +8,6 @@ import androidx.compose.runtime.remember
 import io.github.carvalhoxx.data.local.AppDatabase
 import io.github.carvalhoxx.data.repository.BossFightRepository
 import io.github.carvalhoxx.ui.navigation.BossFightNavHost
-import io.github.carvalhoxx.ui.theme.ContadorBossFightTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,9 +18,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val rememberedRepository = remember { repository }
-            ContadorBossFightTheme {
-                BossFightNavHost(repository = rememberedRepository)
-            }
+            BossFightNavHost(repository = rememberedRepository)
         }
     }
 }

@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,8 +39,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.carvalhoxx.ui.theme.ContadorBossFightTheme
+import io.github.carvalhoxx.ui.theme.GameThemePreset
 import io.github.carvalhoxx.ui.util.formatDurationMillis
 import io.github.carvalhoxx.ui.viewmodel.BossListViewModel
 import io.github.carvalhoxx.ui.viewmodel.BossUiModel
@@ -54,13 +58,34 @@ fun BossListScreen(
     var showAddBossDialog by rememberSaveable { mutableStateOf(false) }
     var newBossName by rememberSaveable { mutableStateOf("") }
 
-    Scaffold(
+    val activePreset = GameThemePreset.fromGameName(uiState.game?.name)
+
+    ContadorBossFightTheme(currentGameName = uiState.game?.name) {
+        Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text(uiState.game?.name ?: "Chefes") },
+                title = {
+                    Column {
+                        Text(
+                            text = uiState.game?.name ?: "Chefes",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Tema: ${activePreset.displayName}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                },
                 navigationIcon = {
                     TextButton(onClick = onNavigateBack) {
-                        Text("< Voltar")
+                        Text(
+                            text = "< Voltar",
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            fontWeight = FontWeight.SemiBold
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -70,7 +95,11 @@ fun BossListScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showAddBossDialog = true }) {
+            FloatingActionButton(
+                onClick = { showAddBossDialog = true },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ) {
                 Text("+ Boss", modifier = Modifier.padding(horizontal = 16.dp), fontWeight = FontWeight.Bold)
             }
         }
@@ -85,7 +114,8 @@ fun BossListScreen(
             ) {
                 Text(
                     text = "Nenhum Boss cadastrado neste jogo.\nToque em \"+ Boss\" para adicionar (ex: Godrick).",
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onBackground
                 )
             }
         } else {
@@ -156,6 +186,7 @@ fun BossListScreen(
             )
         }
     }
+    }
 }
 
 @Composable
@@ -172,6 +203,10 @@ private fun BossCard(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
@@ -188,6 +223,7 @@ private fun BossCard(
                     text = boss.name,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.weight(1f)
                 )
                 TextButton(onClick = onDeleteBoss) {
@@ -196,7 +232,7 @@ private fun BossCard(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
-            HorizontalDivider()
+            HorizontalDivider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f))
             Spacer(modifier = Modifier.height(12.dp))
 
             // Contador de Mortes
@@ -214,7 +250,8 @@ private fun BossCard(
                     Text(
                         text = boss.deaths.toString(),
                         style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.ExtraBold
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
 
@@ -226,14 +263,20 @@ private fun BossCard(
                         Text("-", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     }
                     Spacer(modifier = Modifier.width(12.dp))
-                    Button(onClick = onIncrementDeath) {
+                    Button(
+                        onClick = onIncrementDeath,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        )
+                    ) {
                         Text("+", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
-            HorizontalDivider()
+            HorizontalDivider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f))
             Spacer(modifier = Modifier.height(12.dp))
 
             // Cronômetro
@@ -250,36 +293,72 @@ private fun BossCard(
                     text = formatDurationMillis(bossModel.displayElapsedMillis),
                     style = MaterialTheme.typography.displaySmall,
                     fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = if (boss.isRunning) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
+                val compactButtonPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp)
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Button(
                         onClick = onToggleTimer,
+                        contentPadding = compactButtonPadding,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text(if (boss.isRunning) "Pausar" else "Iniciar")
+                        Text(
+                            text = if (boss.isRunning) "Pausar" else "Iniciar",
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
 
                     FilledTonalButton(
                         onClick = onAddLap,
                         enabled = bossModel.displayElapsedMillis > 0L,
+                        contentPadding = compactButtonPadding,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Lap / Fase")
+                        Text(
+                            text = "Lap",
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
                     }
 
                     OutlinedButton(
                         onClick = onResetTimer,
                         enabled = bossModel.displayElapsedMillis > 0L || boss.laps.isNotEmpty(),
+                        contentPadding = compactButtonPadding,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Zerar")
+                        Text(
+                            text = "Zerar",
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
                     }
                 }
             }
@@ -287,12 +366,13 @@ private fun BossCard(
             // Lista de Laps
             if (boss.laps.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(12.dp))
-                HorizontalDivider()
+                HorizontalDivider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f))
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "Marcações de Tempo (Laps):",
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.secondary
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 boss.laps.forEachIndexed { index, lapMillis ->
@@ -304,13 +384,15 @@ private fun BossCard(
                     ) {
                         Text(
                             text = "Fase / Lap #${index + 1}",
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
                             text = formatDurationMillis(lapMillis),
                             style = MaterialTheme.typography.bodyMedium,
                             fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.Medium
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 }

@@ -10,6 +10,7 @@ import androidx.navigation.navArgument
 import io.github.carvalhoxx.data.repository.BossFightRepository
 import io.github.carvalhoxx.ui.screen.BossListScreen
 import io.github.carvalhoxx.ui.screen.GameListScreen
+import io.github.carvalhoxx.ui.theme.ContadorBossFightTheme
 import io.github.carvalhoxx.ui.viewmodel.BossListViewModel
 import io.github.carvalhoxx.ui.viewmodel.GameListViewModel
 
@@ -25,12 +26,16 @@ fun BossFightNavHost(repository: BossFightRepository) {
             val gameListViewModel: GameListViewModel = viewModel(
                 factory = GameListViewModel.provideFactory(repository)
             )
-            GameListScreen(
-                viewModel = gameListViewModel,
-                onGameClick = { gameId ->
-                    navController.navigate("bosses/$gameId")
-                }
-            )
+            ContadorBossFightTheme(currentGameName = null) {
+                GameListScreen(
+                    viewModel = gameListViewModel,
+                    onGameClick = { game ->
+                        navController.navigate("bosses/${game.id}") {
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
         }
 
         composable(
@@ -39,11 +44,14 @@ fun BossFightNavHost(repository: BossFightRepository) {
         ) { backStackEntry ->
             val gameId = backStackEntry.arguments?.getLong("gameId") ?: return@composable
             val bossListViewModel: BossListViewModel = viewModel(
+                key = "boss_list_$gameId",
                 factory = BossListViewModel.provideFactory(gameId, repository)
             )
             BossListScreen(
                 viewModel = bossListViewModel,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
             )
         }
     }
