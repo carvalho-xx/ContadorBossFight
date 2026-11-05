@@ -465,10 +465,18 @@ private fun HudGameCard(
                         modifier = Modifier.padding(end = 6.dp)
                     )
                     Text(
-                        text = "${summary.bossCount} ${if (summary.bossCount == 1) "BOSS" else "BOSSES"}",
+                        text = if (summary.bossCount > 0) {
+                            "${summary.defeatedCount}/${summary.bossCount} ABATIDOS"
+                        } else {
+                            "0 BOSSES"
+                        },
                         style = MaterialTheme.typography.labelSmall,
-                        color = cardPalette.textPrimary,
-                        letterSpacing = 1.8.sp
+                        color = if (summary.bossCount > 0 && summary.defeatedCount == summary.bossCount) {
+                            cardPalette.accentBright
+                        } else {
+                            cardPalette.textPrimary
+                        },
+                        letterSpacing = 1.6.sp
                     )
 
                     Spacer(modifier = Modifier.width(16.dp))
@@ -481,7 +489,7 @@ private fun HudGameCard(
                         text = "${summary.totalDeaths} MORTES",
                         style = MaterialTheme.typography.labelSmall,
                         color = cardPalette.textSecondary,
-                        letterSpacing = 1.8.sp
+                        letterSpacing = 1.6.sp
                     )
                 }
 

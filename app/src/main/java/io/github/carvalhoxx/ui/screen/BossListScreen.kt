@@ -17,7 +17,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -34,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,6 +52,7 @@ import io.github.carvalhoxx.ui.components.HudTopHeader
 import io.github.carvalhoxx.ui.theme.ContadorBossFightTheme
 import io.github.carvalhoxx.ui.theme.LocalHudPalette
 import io.github.carvalhoxx.ui.util.formatDurationMillis
+import io.github.carvalhoxx.ui.util.hmsToMillis
 import io.github.carvalhoxx.ui.util.toRomanNumeral
 import io.github.carvalhoxx.ui.viewmodel.BossListViewModel
 import io.github.carvalhoxx.ui.viewmodel.BossUiModel
@@ -63,6 +68,23 @@ fun BossListScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showAddBossDialog by rememberSaveable { mutableStateOf(false) }
     var newBossName by rememberSaveable { mutableStateOf("") }
+    var initialDeathsInput by rememberSaveable { mutableStateOf("") }
+    var initialHoursInput by rememberSaveable { mutableStateOf("") }
+    var initialMinutesInput by rememberSaveable { mutableStateOf("") }
+    var initialSecondsInput by rememberSaveable { mutableStateOf("") }
+    var initialIsDefeated by rememberSaveable { mutableStateOf(false) }
+
+    val resetAddBossDialog = {
+        showAddBossDialog = false
+        newBossName = ""
+        initialDeathsInput = ""
+        initialHoursInput = ""
+        initialMinutesInput = ""
+        initialSecondsInput = ""
+        initialIsDefeated = false
+    }
+
+    val defeatedCount = uiState.bosses.count { it.entity.isDefeated }
 
     ContadorBossFightTheme(currentGameName = uiState.game?.name) {
         val palette = LocalHudPalette.current
@@ -109,10 +131,14 @@ fun BossListScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "SELECIONE SEU ADVERSÁRIO",
+                            text = if (uiState.bosses.isNotEmpty()) {
+                                "SELECIONE SEU ADVERSÁRIO • $defeatedCount/${uiState.bosses.size} ABATIDOS"
+                            } else {
+                                "SELECIONE SEU ADVERSÁRIO"
+                            },
                             style = MaterialTheme.typography.labelSmall,
                             color = palette.textSecondary,
-                            letterSpacing = 2.5.sp
+                            letterSpacing = 2.sp
                         )
                     }
                 }
@@ -200,10 +226,7 @@ fun BossListScreen(
 
             if (showAddBossDialog) {
                 AlertDialog(
-                    onDismissRequest = {
-                        showAddBossDialog = false
-                        newBossName = ""
-                    },
+                    onDismissRequest = resetAddBossDialog,
                     containerColor = Color(0xF514171B),
                     shape = RoundedCornerShape(2.dp),
                     title = {
@@ -225,7 +248,7 @@ fun BossListScreen(
                     text = {
                         Column {
                             Text(
-                                text = "Informe o nome do chefe:",
+                                text = "Informe o nome do chefe e, se já o enfrentou antes, os dados iniciais (opcional):",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = palette.textSecondary
                             )
@@ -233,10 +256,99 @@ fun BossListScreen(
                             OutlinedTextField(
                                 value = newBossName,
                                 onValueChange = { newBossName = it },
+                                label = { Text("Nome do Boss") },
                                 placeholder = { Text("Ex: Margit, o Agouro Caído") },
                                 singleLine = true,
                                 modifier = Modifier.fillMaxWidth()
                             )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            OutlinedTextField(
+                                value = initialDeathsInput,
+                                onValueChange = { value ->
+                                    if (value.length <= 5 && value.all { it.isDigit() }) {
+                                        initialDeathsInput = value
+                                    }
+                                },
+                                label = { Text("Mortes já registradas (opcional)") },
+                                placeholder = { Text("0") },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text(
+                                text = "TEMPO JÁ REGISTRADO (OPCIONAL)",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = palette.accent,
+                                letterSpacing = 1.8.sp
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                OutlinedTextField(
+                                    value = initialHoursInput,
+                                    onValueChange = { value ->
+                                        if (value.length <= 4 && value.all { it.isDigit() }) {
+                                            initialHoursInput = value
+                                        }
+                                    },
+                                    label = { Text("Horas") },
+                                    placeholder = { Text("0") },
+                                    singleLine = true,
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    modifier = Modifier.weight(1f)
+                                )
+                                OutlinedTextField(
+                                    value = initialMinutesInput,
+                                    onValueChange = { value ->
+                                        if (value.length <= 2 && value.all { it.isDigit() }) {
+                                            initialMinutesInput = value
+                                        }
+                                    },
+                                    label = { Text("Min") },
+                                    placeholder = { Text("0") },
+                                    singleLine = true,
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    modifier = Modifier.weight(1f)
+                                )
+                                OutlinedTextField(
+                                    value = initialSecondsInput,
+                                    onValueChange = { value ->
+                                        if (value.length <= 2 && value.all { it.isDigit() }) {
+                                            initialSecondsInput = value
+                                        }
+                                    },
+                                    label = { Text("Seg") },
+                                    placeholder = { Text("0") },
+                                    singleLine = true,
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { initialIsDefeated = !initialIsDefeated },
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = initialIsDefeated,
+                                    onCheckedChange = { initialIsDefeated = it },
+                                    colors = CheckboxDefaults.colors(
+                                        checkedColor = palette.accent,
+                                        checkmarkColor = palette.onAccent,
+                                        uncheckedColor = palette.textSecondary
+                                    )
+                                )
+                                Text(
+                                    text = "Boss já derrotado (Inimigo Abatido)",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = palette.textPrimary
+                                )
+                            }
                         }
                     },
                     confirmButton = {
@@ -247,21 +359,24 @@ fun BossListScreen(
                             palette = palette,
                             onClick = {
                                 if (newBossName.isNotBlank()) {
-                                    viewModel.addBoss(newBossName)
-                                    newBossName = ""
-                                    showAddBossDialog = false
+                                    val deaths = initialDeathsInput.toIntOrNull() ?: 0
+                                    val h = initialHoursInput.toIntOrNull() ?: 0
+                                    val m = initialMinutesInput.toIntOrNull() ?: 0
+                                    val s = initialSecondsInput.toIntOrNull() ?: 0
+                                    viewModel.addBoss(
+                                        name = newBossName,
+                                        initialDeaths = deaths,
+                                        initialDurationMillis = hmsToMillis(h, m, s),
+                                        isDefeated = initialIsDefeated
+                                    )
+                                    resetAddBossDialog()
                                 }
                             },
                             modifier = Modifier.width(110.dp)
                         )
                     },
                     dismissButton = {
-                        TextButton(
-                            onClick = {
-                                newBossName = ""
-                                showAddBossDialog = false
-                            }
-                        ) {
+                        TextButton(onClick = resetAddBossDialog) {
                             Text("Cancelar", color = palette.textSecondary)
                         }
                     }
@@ -280,9 +395,23 @@ private fun HudBossSummaryCard(
     val palette = LocalHudPalette.current
     val boss = bossModel.entity
     val attemptNumber = boss.deaths + 1
+    val isDefeated = boss.isDefeated
+
+    val cardBorderColor = if (isDefeated) {
+        palette.accentBright.copy(alpha = 0.85f)
+    } else {
+        palette.borderAccent
+    }
+    val cardBgColor = if (isDefeated) {
+        palette.panelInnerSurface
+    } else {
+        palette.panelSurface
+    }
 
     HudGlassPanel(
         palette = palette,
+        borderColor = cardBorderColor,
+        backgroundColor = cardBgColor,
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onEnterCombat)
@@ -299,19 +428,24 @@ private fun HudBossSummaryCard(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "◆",
-                        color = palette.accent,
-                        fontSize = 9.sp
+                        text = if (isDefeated) "★" else "◆",
+                        color = if (isDefeated) palette.accentBright else palette.accent,
+                        fontSize = 10.sp
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = if (boss.isRunning) {
-                            "COMBATE EM ANDAMENTO"
-                        } else {
-                            "TENTATIVA ${toRomanNumeral(attemptNumber)}"
+                        text = when {
+                            isDefeated -> "INIMIGO ABATIDO"
+                            boss.isRunning -> "COMBATE EM ANDAMENTO"
+                            else -> "TENTATIVA ${toRomanNumeral(attemptNumber)}"
                         },
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (boss.isRunning) palette.accentBright else palette.textSecondary,
+                        color = when {
+                            isDefeated -> palette.accentBright
+                            boss.isRunning -> palette.accentBright
+                            else -> palette.textSecondary
+                        },
+                        fontWeight = if (isDefeated) FontWeight.Bold else FontWeight.Medium,
                         letterSpacing = 2.sp
                     )
                 }
@@ -328,11 +462,18 @@ private fun HudBossSummaryCard(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            Text(
-                text = boss.name,
-                style = MaterialTheme.typography.headlineMedium,
-                color = palette.textPrimary
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = boss.name,
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = if (isDefeated) palette.accentBright else palette.textPrimary,
+                    modifier = Modifier.weight(1f)
+                )
+            }
 
             Spacer(modifier = Modifier.height(12.dp))
             HudDiamondDivider(palette = palette)
@@ -365,7 +506,7 @@ private fun HudBossSummaryCard(
 
                     Column {
                         Text(
-                            text = "TEMPO DE COMBATE",
+                            text = if (isDefeated) "TEMPO FINAL" else "TEMPO DE COMBATE",
                             style = MaterialTheme.typography.labelSmall,
                             color = palette.textSecondary,
                             letterSpacing = 1.5.sp
@@ -373,9 +514,15 @@ private fun HudBossSummaryCard(
                         Text(
                             text = formatDurationMillis(bossModel.displayElapsedMillis),
                             style = MaterialTheme.typography.titleLarge,
+                            fontSize = 18.sp,
+                            maxLines = 1,
                             fontFamily = FontFamily.SansSerif,
                             fontWeight = FontWeight.Light,
-                            color = if (boss.isRunning) palette.accentBright else palette.textPrimary
+                            color = when {
+                                isDefeated -> palette.accentBright
+                                boss.isRunning -> palette.accentBright
+                                else -> palette.textPrimary
+                            }
                         )
                     }
                 }
@@ -383,9 +530,9 @@ private fun HudBossSummaryCard(
                 Spacer(modifier = Modifier.width(12.dp))
 
                 HudMetallicButton(
-                    text = "Lutar",
-                    filled = true,
-                    leadingSymbol = "⚔",
+                    text = if (isDefeated) "Abatido" else "Lutar",
+                    filled = !isDefeated,
+                    leadingSymbol = if (isDefeated) "✓" else "⚔",
                     palette = palette,
                     onClick = onEnterCombat,
                     modifier = Modifier.width(110.dp)

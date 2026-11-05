@@ -9,11 +9,15 @@ fun formatDurationMillis(millis: Long): String {
     val seconds = (safeMillis % 60_000) / 1_000
     val centiseconds = (safeMillis % 1_000) / 10
 
-    return if (hours > 0) {
-        String.format(Locale.US, "%02d:%02d:%02d.%02d", hours, minutes, seconds, centiseconds)
-    } else {
-        String.format(Locale.US, "%02d:%02d.%02d", minutes, seconds, centiseconds)
-    }
+    return String.format(Locale.US, "%02d:%02d:%02d.%02d", hours, minutes, seconds, centiseconds)
+}
+
+fun hmsToMillis(hours: Int, minutes: Int, seconds: Int, centiseconds: Int = 0): Long {
+    val h = hours.coerceAtLeast(0).toLong()
+    val m = minutes.coerceIn(0, 59).toLong()
+    val s = seconds.coerceIn(0, 59).toLong()
+    val cs = centiseconds.coerceIn(0, 99).toLong()
+    return (h * 3_600_000L) + (m * 60_000L) + (s * 1_000L) + (cs * 10L)
 }
 
 fun toRomanNumeral(number: Int): String {

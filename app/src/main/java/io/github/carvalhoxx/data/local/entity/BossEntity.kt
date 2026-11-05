@@ -26,5 +26,6 @@ data class BossEntity(
     val isRunning: Boolean = false,
     val accumulatedMillis: Long = 0L,
     val lastStartedEpochMillis: Long? = null,
-    val laps: List<Long> = emptyList()
+    val laps: List<Long> = emptyList(),
+    val isDefeated: Boolean = false
 )

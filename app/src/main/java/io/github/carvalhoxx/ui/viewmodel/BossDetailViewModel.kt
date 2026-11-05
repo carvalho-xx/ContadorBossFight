@@ -86,6 +86,24 @@ class BossDetailViewModel(
         }
     }
 
+    fun setDeaths(deaths: Int) {
+        viewModelScope.launch {
+            repository.setDeaths(bossId, deaths)
+        }
+    }
+
+    fun setTimerDuration(durationMillis: Long) {
+        viewModelScope.launch {
+            repository.setTimerDuration(bossId, durationMillis)
+        }
+    }
+
+    fun toggleDefeated() {
+        viewModelScope.launch {
+            repository.toggleBossDefeated(bossId)
+        }
+    }
+
     fun toggleTimer() {
         viewModelScope.launch {
             repository.toggleTimer(bossId)

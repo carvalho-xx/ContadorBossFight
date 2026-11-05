@@ -76,9 +76,26 @@ class BossListViewModel(
         initialValue = BossScreenUiState()
     )
 
-    fun addBoss(name: String) {
+    fun addBoss(
+        name: String,
+        initialDeaths: Int = 0,
+        initialDurationMillis: Long = 0L,
+        isDefeated: Boolean = false
+    ) {
         viewModelScope.launch {
-            repository.createBoss(gameId, name)
+            repository.createBoss(
+                gameId = gameId,
+                name = name,
+                initialDeaths = initialDeaths,
+                initialDurationMillis = initialDurationMillis,
+                isDefeated = isDefeated
+            )
+        }
+    }
+
+    fun toggleBossDefeated(bossId: Long) {
+        viewModelScope.launch {
+            repository.toggleBossDefeated(bossId)
         }
     }
 

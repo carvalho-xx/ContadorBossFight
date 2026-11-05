@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 data class GameSummaryUiModel(
     val game: GameEntity,
     val bossCount: Int,
+    val defeatedCount: Int,
     val totalDeaths: Int
 )
 
@@ -31,6 +32,7 @@ class GameListViewModel(
             GameSummaryUiModel(
                 game = game,
                 bossCount = gameBosses.size,
+                defeatedCount = gameBosses.count { it.isDefeated },
                 totalDeaths = gameBosses.sumOf { it.deaths }
             )
         }

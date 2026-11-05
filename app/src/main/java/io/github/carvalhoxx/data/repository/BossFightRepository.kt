@@ -27,10 +27,42 @@ class BossFightRepository(private val dao: BossFightDao) {
         dao.deleteGame(game)
     }
 
-    suspend fun createBoss(gameId: Long, name: String): Long {
+    suspend fun createBoss(
+        gameId: Long,
+        name: String,
+        initialDeaths: Int = 0,
+        initialDurationMillis: Long = 0L,
+        isDefeated: Boolean = false
+    ): Long {
         val trimmed = name.trim()
         if (trimmed.isEmpty()) return -1L
-        return dao.insertBoss(BossEntity(gameId = gameId, name = trimmed))
+        return dao.insertBoss(
+            BossEntity(
+                gameId = gameId,
+                name = trimmed,
+                deaths = initialDeaths.coerceAtLeast(0),
+                accumulatedMillis = initialDurationMillis.coerceAtLeast(0L),
+                isDefeated = isDefeated
+            )
+        )
+    }
+
+    suspend fun toggleBossDefeated(bossId: Long, nowEpochMillis: Long = System.currentTimeMillis()) {
+        val boss = dao.getBossById(bossId) ?: return
+        val newDefeated = !boss.isDefeated
+        if (newDefeated && boss.isRunning) {
+            val delta = boss.lastStartedEpochMillis?.let { (nowEpochMillis - it).coerceAtLeast(0L) } ?: 0L
+            dao.updateBoss(
+                boss.copy(
+                    isDefeated = true,
+                    isRunning = false,
+                    accumulatedMillis = boss.accumulatedMillis + delta,
+                    lastStartedEpochMillis = null
+                )
+            )
+        } else {
+            dao.updateBoss(boss.copy(isDefeated = newDefeated))
+        }
     }
 
     suspend fun deleteBoss(boss: BossEntity) {
@@ -46,6 +78,22 @@ class BossFightRepository(private val dao: BossFightDao) {
         val boss = dao.getBossById(bossId) ?: return
         val newDeaths = (boss.deaths - 1).coerceAtLeast(0)
         dao.updateBoss(boss.copy(deaths = newDeaths))
+    }
+
+    suspend fun setDeaths(bossId: Long, deaths: Int) {
+        val boss = dao.getBossById(bossId) ?: return
+        dao.updateBoss(boss.copy(deaths = deaths.coerceAtLeast(0)))
+    }
+
+    suspend fun setTimerDuration(bossId: Long, durationMillis: Long) {
+        val boss = dao.getBossById(bossId) ?: return
+        dao.updateBoss(
+            boss.copy(
+                isRunning = false,
+                accumulatedMillis = durationMillis.coerceAtLeast(0L),
+                lastStartedEpochMillis = null
+            )
+        )
     }
 
     suspend fun toggleTimer(bossId: Long, nowEpochMillis: Long = System.currentTimeMillis()) {
